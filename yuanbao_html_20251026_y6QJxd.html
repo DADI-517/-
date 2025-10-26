@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三位数与两位数乘法竖式计算练习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .math-grid {
+            display: grid;
+            gap: 0;
+        }
+        .input-cell input {
+            caret-color: transparent;
+            font-size: 18px;
+        }
+        .input-cell input:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: fadeInOut 3s ease-in-out;
+            font-size: 14px;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.success {
+            background-color: #10b981;
+            color: white;
+        }
+        .toast.error {
+            background-color: #ef4444;
+            color: white;
+        }
+        .toast.warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .toast.info {
+            background-color: #3b82f6;
+            color: white;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 0; }
+            10% { opacity: 1; top: 20px; }
+            90% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 0; }
+        }
+        .dark-mode {
+            background-color: #1f2937;
+            color: white;
+        }
+        .light-mode {
+            background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
+            min-height: 100vh;
+        }
+        button {
+            touch-action: manipulation;
+        }
+        input {
+            touch-action: manipulation;
+        }
+        @media (max-width: 640px) {
+            .input-cell input {
+                font-size: 16px;
+            }
+            button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="min-h-screen p-4 flex flex-col items-center">
+        <div class="max-w-2xl w-full mx-auto">
+            <header class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-indigo-600 mb-2">三位数与两位数乘法竖式计算练习</h1>
+                <p class="text-gray-600 dark:text-gray-300">练习三位数与两位数的乘法竖式计算，提高计算能力</p>
+            </header>
+            
+            <!-- 自定义乘法算式 -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fa-solid fa-keyboard text-blue-500 mr-2"></i>自定义乘法算式
+                </h2>
+                <div class="flex flex-col sm:flex-row gap-4 items-center mb-4">
+                    <input type="text" id="multiplicand" placeholder="被乘数（100-999）" 
+                           class="px-4 py-2 border rounded-lg w-full sm:w-1/3 bg-white border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                           maxlength="3" inputmode="numeric">
+                    <span class="text-xl font-bold">×</span>
+                    <input type="text" id="multiplier" placeholder="乘数（10-99）" 
+                           class="px-4 py-2 border rounded-lg w-full sm:w-1/3 bg-white border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                           maxlength="2" inputmode="numeric">
+                    <button id="generate-custom" 
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium shadow-md hover:bg-blue-700 transition-colors duration-300 flex-1 sm:flex-none whitespace-nowrap">
+                        <i class="fa-solid fa-calculator mr-2"></i>生成竖式
+                    </button>
+                </div>
+                <div id="input-error" class="text-red-500 text-sm hidden">
+                    <i class="fa-solid fa-exclamation-circle mr-1"></i>
+                    <span id="error-message"></span>
+                </div>
+            </div>
+            
+            <!-- 乘法竖式练习区域 -->
+            <main class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+                <div class="mb-6">
+                    <div id="math-grid" class="math-grid gap-0"></div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="check-answers" 
+                            class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium shadow-md hover:bg-indigo-700 transition-colors duration-300 flex items-center justify-center">
+                        <i class="fa-solid fa-check-circle mr-2"></i>检查答案
+                    </button>
+                    <button id="new-problem" 
+                            class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium shadow-md hover:bg-green-700 transition-colors duration-300 flex items-center justify-center">
+                        <i class="fa-solid fa-refresh mr-2"></i>新题目
+                    </button>
+                    <button id="show-answers" 
+                            class="px-6 py-3 bg-amber-500 text-white rounded-lg font-medium shadow-md hover:bg-amber-600 transition-colors duration-300 flex items-center justify-center">
+                        <i class="fa-solid fa-magic mr-2"></i>显示答案
+                    </button>
+                </div>
+            </main>
+            
+            <!-- 学习提示 -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8" style="background-color: #A7F3D0;">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i>学习提示
+                </h2>
+                <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>从右往左填写数字（从个位开始）</li>
+                    <li>先计算个位数与三位数的乘积，确保个位对齐个位</li>
+                    <li>再计算十位数与三位数的乘积，结果需向左移一位，确保十位对齐十位</li>
+                    <li>注意乘法过程中的进位</li>
+                    <li>最后将两个乘积相加得到最终结果</li>
+                    <li>输入数字显绿色代表正确，红色代表错误，黑色代表此格不用填写</li>
+                    <li>遇到困难时，可以点击"显示答案"按钮查看正确解法</li>
+                </ul>
+            </div>
+        </div>
+        
+        <footer class="mt-auto py-4 text-center text-gray-500 text-sm">
+            <p>小学生数学学习工具 © <span id="current-year"></span></p>
+        </footer>
+    </div>
+
+    <!-- 主题切换按钮 -->
+    <button id="theme-toggle" class="fixed top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white">
+        <i class="fa-solid fa-moon" id="theme-icon"></i>
+    </button>
+
+    <script>
+        // 设置当前年份
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // 主题切换功能
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+        
+        // 检查本地存储的主题设置
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            body.classList.remove('light-mode');
+            body.classList.add('dark-mode');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // 生成随机乘法题目
+        function generateNumbers(customMultiplicand, customMultiplier) {
+            const multiplicand = customMultiplicand || Math.floor(Math.random() * 900) + 100;
+            const multiplier = customMultiplier || Math.floor(Math.random() * 90) + 10;
+            const result = multiplicand * multiplier;
+            const multiplierOnes = multiplier % 10;
+            const multiplierTens = Math.floor(multiplier / 10);
+            const step1 = multiplicand * multiplierOnes;
+            const step2 = multiplicand * multiplierTens;
+
+            return {
+                multiplicand,
+                multiplier,
+                result,
+                steps: [step1, step2]
+            };
+        }
+
+        // 格式化数字为数组
+        function formatNumber(num) {
+            return num.toString().split("");
+        }
+
+        // 计算网格行列数
+        function calculateGridCount(multiplicand, multiplier, step1, step2, result) {
+            const multiplicandStr = multiplicand.toString();
+            const multiplierStr = multiplier.toString();
+            const step1Str = step1.toString();
+            const step2Str = step2.toString();
+            const resultStr = result.toString();
+
+            const maxLength = Math.max(
+                multiplicandStr.length,
+                multiplierStr.length,
+                step1Str.length,
+                step2Str.length,
+                resultStr.length
+            );
+
+            const rows = 3 + (multiplierStr.length > 1 ? 2 : 1);
+            const cols = maxLength + 2;
+
+            return {
+                rows,
+                cols
+            };
+        }
+
+        // 获取正确答案数字
+        function getCorrectDigit(answerIndex, step1Digits, step2Digits, resultDigits, cols) {
+            if (answerIndex < cols) {
+                const positionFromRight = cols - 1 - answerIndex;
+                const digitIndex = step1Digits.length - 1 - positionFromRight;
+
+                if (digitIndex >= 0 && digitIndex < step1Digits.length) {
+                    return step1Digits[digitIndex];
+                }
+
+                return "";
+            }
+
+            const step2StartIndex = cols;
+
+            if (answerIndex < step2StartIndex + cols) {
+                const positionFromRight = cols - 1 - (answerIndex - step2StartIndex) - 1;
+                const digitIndex = step2Digits.length - 1 - positionFromRight;
+
+                if (digitIndex >= 0 && digitIndex < step2Digits.length) {
+                    return step2Digits[digitIndex];
+                }
+
+                return "";
+            }
+
+            const resultStartIndex = step2StartIndex + cols;
+
+            if (answerIndex < resultStartIndex + cols) {
+                const positionFromRight = cols - 1 - (answerIndex - resultStartIndex);
+                const digitIndex = resultDigits.length - 1 - positionFromRight;
+
+                if (digitIndex >= 0 && digitIndex < resultDigits.length) {
+                    return resultDigits[digitIndex];
+                }
+
+                return "";
+            }
+
+            return "";
+        }
+
+        // 检查是否需要填写数字
+        function shouldHaveCorrectDigit(answerIndex, step1Digits, step2Digits, resultDigits, cols) {
+            if (answerIndex < cols) {
+                const positionFromRight = cols - 1 - answerIndex;
+                const digitIndex = step1Digits.length - 1 - positionFromRight;
+                return digitIndex >= 0 && digitIndex < step1Digits.length;
+            }
+
+            const step2StartIndex = cols;
+
+            if (answerIndex < step2StartIndex + cols) {
+                const positionFromRight = cols - 1 - (answerIndex - step2StartIndex) - 1;
+                const digitIndex = step2Digits.length - 1 - positionFromRight;
+                return digitIndex >= 0 && digitIndex < step2Digits.length;
+            }
+
+            const resultStartIndex = step2StartIndex + cols;
+
+            if (answerIndex < resultStartIndex + cols) {
+                const positionFromRight = cols - 1 - (answerIndex - resultStartIndex);
+                const digitIndex = resultDigits.length - 1 - positionFromRight;
+                return digitIndex >= 0 && digitIndex < resultDigits.length;
+            }
+
+            return false;
+        }
+
+        // 显示提示消息
+        function showToast(message, type) {
+            // 移除现有的toast
+            const existingToasts = document.querySelectorAll('.toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+
+        // 验证用户输入
+        function validateUserInput(multiplicandStr, multiplierStr) {
+            if (!multiplicandStr || !multiplierStr) {
+                return {
+                    isValid: false,
+                    message: "请输入被乘数和乘数"
+                };
+            }
+
+            if (!/^\d+$/.test(multiplicandStr) || !/^\d+$/.test(multiplierStr)) {
+                return {
+                    isValid: false,
+                    message: "请输入有效的数字"
+                };
+            }
+
+            const multiplicand = parseInt(multiplicandStr);
+            const multiplier = parseInt(multiplierStr);
+
+            if (multiplicand < 100 || multiplicand > 999) {
+                return {
+                    isValid: false,
+                    message: "被乘数必须是三位数（100-999）"
+                };
+            }
+
+            if (multiplier < 10 || multiplier > 99) {
+                return {
+                    isValid: false,
+                    message: "乘数必须是两位数（10-99）"
+                };
+            }
+
+            return {
+                isValid: true,
+                message: ""
+            };
+        }
+
+        // 应用状态
+        let currentProblem = generateNumbers();
+        let userAnswers = [];
+        let feedback = {};
+        let inputRefs = [];
+
+        // 渲染计算网格
+        function renderCalculationGrid() {
+            const multiplicandDigits = formatNumber(currentProblem.multiplicand);
+            const multiplierDigits = formatNumber(currentProblem.multiplier);
+            const step1Digits = formatNumber(currentProblem.steps[0]);
+            const step2Digits = formatNumber(currentProblem.steps[1]);
+            const resultDigits = formatNumber(currentProblem.result);
+
+            const { rows, cols } = calculateGridCount(
+                currentProblem.multiplicand,
+                currentProblem.multiplier,
+                currentProblem.steps[0],
+                currentProblem.steps[1],
+                currentProblem.result
+            );
+
+            const gridContainer = document.getElementById('math-grid');
+            gridContainer.innerHTML = '';
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            gridContainer.style.gridTemplateRows = `repeat(${rows}, auto)`;
+
+            let answerIndex = 0;
+            inputRefs = [];
+
+            // 第一行：被乘数
+            for (let j = 0; j < cols; j++) {
+                const startColForMultiplicand = cols - multiplicandDigits.length;
+                const digitIndex = j - startColForMultiplicand;
+                const digit = digitIndex >= 0 && digitIndex < multiplicandDigits.length ? multiplicandDigits[digitIndex] : "";
+                
+                const cell = document.createElement('div');
+                cell.className = `border border-gray-300 flex items-center justify-center h-16 text-lg font-medium ${body.classList.contains('dark-mode') ? 'bg-gray-800 text-white' : 'bg-white'}`;
+                cell.textContent = digit;
+                gridContainer.appendChild(cell);
+            }
+
+            // 第二行：乘数
+            for (let j = 0; j < cols; j++) {
+                const isFirstCol = j === 0;
+                const startColForMultiplier = cols - multiplierDigits.length;
+                const digitIndex = j - startColForMultiplier;
+                const digit = isFirstCol ? "×" : digitIndex >= 0 && digitIndex < multiplierDigits.length ? multiplierDigits[digitIndex] : "";
+                
+                const cell = document.createElement('div');
+                cell.className = `border border-gray-300 flex items-center justify-center h-16 text-lg font-medium ${body.classList.contains('dark-mode') ? 'bg-gray-800 text-white' : 'bg-white'}`;
+                cell.textContent = digit;
+                gridContainer.appendChild(cell);
+            }
+
+            // 第三行：横线
+            for (let j = 0; j < cols; j++) {
+                const cell = document.createElement('div');
+                cell.className = `border-t-2 border-b border-gray-300 flex items-center justify-center h-3 ${body.classList.contains('dark-mode') ? 'bg-gray-800' : 'bg-white'}`;
+                if (j === 0) {
+                    const line = document.createElement('div');
+                    line.className = 'border-t-2 border-gray-300 w-full h-0';
+                    cell.appendChild(line);
+                }
+                gridContainer.appendChild(cell);
+            }
+
+            // 第四行：第一步结果
+            for (let j = 0; j < cols; j++) {
+                const cell = document.createElement('div');
+                cell.className = `border border-gray-300 flex items-center justify-center h-16 input-cell ${body.classList.contains('dark-mode') ? 'bg-gray-800' : 'bg-white'}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.value = userAnswers[answerIndex] || '';
+                input.className = `w-full h-full text-center text-xl font-medium border-none outline-none cursor-text transition-all duration-200 focus:bg-blue-100 dark:focus:bg-blue-900/30 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600`;
+                input.inputMode = 'numeric';
+                input.pattern = '[0-9]';
+                input.autocomplete = 'off';
+                input.spellcheck = false;
+                
+                // 设置输入框样式
+                if (feedback[answerIndex] !== undefined) {
+                    if (feedback[answerIndex]) {
+                        input.classList.add('text-green-500', 'bg-green-50', 'dark:bg-green-900/20');
+                    } else {
+                        input.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+                    }
+                } else {
+                    if (body.classList.contains('dark-mode')) {
+                        input.classList.add('text-white');
+                    } else {
+                        input.classList.add('text-black');
+                    }
+                }
+                
+                input.addEventListener('input', (e) => {
+                    handleInputChange(answerIndex, e.target.value, step1Digits, step2Digits, resultDigits, cols);
+                });
+                
+                inputRefs.push(input);
+                cell.appendChild(input);
+                gridContainer.appendChild(cell);
+                answerIndex++;
+            }
+
+            // 如果乘数是两位数，添加第二步结果和横线
+            if (multiplierDigits.length > 1) {
+                // 第五行：第二步结果
+                for (let j = 0; j < cols; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `border border-gray-300 flex items-center justify-center h-16 input-cell ${body.classList.contains('dark-mode') ? 'bg-gray-800' : 'bg-white'}`;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.value = userAnswers[answerIndex] || '';
+                    input.className = `w-full h-full text-center text-xl font-medium border-none outline-none cursor-text transition-all duration-200 focus:bg-blue-100 dark:focus:bg-blue-900/30 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600`;
+                    input.inputMode = 'numeric';
+                    input.pattern = '[0-9]';
+                    input.autocomplete = 'off';
+                    input.spellcheck = false;
+                    
+                    // 设置输入框样式
+                    if (feedback[answerIndex] !== undefined) {
+                        if (feedback[answerIndex]) {
+                            input.classList.add('text-green-500', 'bg-green-50', 'dark:bg-green-900/20');
+                        } else {
+                            input.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+                        }
+                    } else {
+                        if (body.classList.contains('dark-mode')) {
+                            input.classList.add('text-white');
+                        } else {
+                            input.classList.add('text-black');
+                        }
+                    }
+                    
+                    input.addEventListener('input', (e) => {
+                        handleInputChange(answerIndex, e.target.value, step1Digits, step2Digits, resultDigits, cols);
+                    });
+                    
+                    inputRefs.push(input);
+                    cell.appendChild(input);
+                    gridContainer.appendChild(cell);
+                    answerIndex++;
+                }
+
+                // 第六行：横线
+                for (let j = 0; j < cols; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `border-t-2 border-b border-gray-300 flex items-center justify-center h-3 ${body.classList.contains('dark-mode') ? 'bg-gray-800' : 'bg-white'}`;
+                    if (j === 0) {
+                        const line = document.createElement('div');
+                        line.className = 'border-t-2 border-gray-300 w-full h-0';
+                        cell.appendChild(line);
+                    }
+                    gridContainer.appendChild(cell);
+                }
+            }
+
+            // 最后一行：最终结果
+            for (let j = 0; j < cols; j++) {
+                const cell = document.createElement('div');
+                cell.className = `border border-gray-300 flex items-center justify-center h-16 input-cell ${body.classList.contains('dark-mode') ? 'bg-gray-800' : 'bg-white'}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.value = userAnswers[answerIndex] || '';
+                input.className = `w-full h-full text-center text-xl font-medium border-none outline-none cursor-text transition-all duration-200 focus:bg-blue-100 dark:focus:bg-blue-900/30 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600`;
+                input.inputMode = 'numeric';
+                input.pattern = '[0-9]';
+                input.autocomplete = 'off';
+                input.spellcheck = false;
+                
+                // 设置输入框样式
+                if (feedback[answerIndex] !== undefined) {
+                    if (feedback[answerIndex]) {
+                        input.classList.add('text-green-500', 'bg-green-50', 'dark:bg-green-900/20');
+                    } else {
+                        input.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+                    }
+                } else {
+                    if (body.classList.contains('dark-mode')) {
+                        input.classList.add('text-white');
+                    } else {
+                        input.classList.add('text-black');
+                    }
+                }
+                
+                input.addEventListener('input', (e) => {
+                    handleInputChange(answerIndex, e.target.value, step1Digits, step2Digits, resultDigits, cols);
+                });
+                
+                inputRefs.push(input);
+                cell.appendChild(input);
+                gridContainer.appendChild(cell);
+                answerIndex++;
+            }
+        }
+
+        // 处理输入变化
+        function handleInputChange(index, value, step1Digits, step2Digits, resultDigits, cols) {
+            if (value && !/^\d$/.test(value)) return;
+
+            const newAnswers = [...userAnswers];
+            newAnswers[index] = value;
+            userAnswers = newAnswers;
+
+            if (value) {
+                const correctDigit = getCorrectDigit(index, step1Digits, step2Digits, resultDigits, cols);
+                const shouldHaveDigit = shouldHaveCorrectDigit(index, step1Digits, step2Digits, resultDigits, cols);
+
+                if (shouldHaveDigit) {
+                    const isCorrect = value === correctDigit;
+                    feedback[index] = isCorrect;
+
+                    if (!isCorrect) {
+                        showToast("这个数字不正确，请再试一次", "error");
+                    }
+                } else {
+                    if (feedback[index] !== undefined) {
+                        delete feedback[index];
+                    }
+                }
+            } else {
+                if (feedback[index] !== undefined) {
+                    delete feedback[index];
+                }
+            }
+
+            // 重新渲染网格以更新样式
+            renderCalculationGrid();
+
+            if (value && index < userAnswers.length - 1 && inputRefs[index + 1]) {
+                inputRefs[index + 1].focus();
+            }
+        }
+
+        // 检查答案
+        function checkAnswers() {
+            const multiplicandDigits = formatNumber(currentProblem.multiplicand);
+            const multiplierDigits = formatNumber(currentProblem.multiplier);
+            const step1Digits = formatNumber(currentProblem.steps[0]);
+            const step2Digits = formatNumber(currentProblem.steps[1]);
+            const resultDigits = formatNumber(currentProblem.result);
+            
+            const { cols } = calculateGridCount(
+                currentProblem.multiplicand,
+                currentProblem.multiplier,
+                currentProblem.steps[0],
+                currentProblem.steps[1],
+                currentProblem.result
+            );
+
+            const allRequiredFilled = userAnswers.every((answer, index) => {
+                const shouldHaveDigit = shouldHaveCorrectDigit(index, step1Digits, step2Digits, resultDigits, cols);
+                return !shouldHaveDigit || answer !== "";
+            });
+
+            if (!allRequiredFilled) {
+                showToast("请填写所有答案后再检查", "warning");
+                return;
+            }
+
+            const newFeedback = {};
+            let isCorrect = true;
+
+            for (let i = 0; i < userAnswers.length; i++) {
+                const correctDigit = getCorrectDigit(i, step1Digits, step2Digits, resultDigits, cols);
+                const shouldHaveDigit = shouldHaveCorrectDigit(i, step1Digits, step2Digits, resultDigits, cols);
+
+                if (shouldHaveDigit) {
+                    const answerCorrect = userAnswers[i] === correctDigit;
+                    newFeedback[i] = answerCorrect;
+
+                    if (!answerCorrect) isCorrect = false;
+                }
+            }
+
+            feedback = newFeedback;
+
+            if (isCorrect) {
+                showToast("太棒了！所有计算都正确！", "success");
+            } else {
+                showToast("有些地方出错了，请仔细检查后重试", "error");
+            }
+
+            // 重新渲染网格以更新样式
+            renderCalculationGrid();
+        }
+
+        // 生成新题目
+        function generateNewProblem() {
+            currentProblem = generateNumbers();
+            userAnswers = [];
+            feedback = {};
+            renderCalculationGrid();
+            showToast("已生成新题目", "info");
+        }
+
+        // 填充正确答案
+        function fillCorrectAnswers() {
+            const multiplicandDigits = formatNumber(currentProblem.multiplicand);
+            const multiplierDigits = formatNumber(currentProblem.multiplier);
+            const step1Digits = formatNumber(currentProblem.steps[0]);
+            const step2Digits = formatNumber(currentProblem.steps[1]);
+            const resultDigits = formatNumber(currentProblem.result);
+            
+            const { cols } = calculateGridCount(
+                currentProblem.multiplicand,
+                currentProblem.multiplier,
+                currentProblem.steps[0],
+                currentProblem.steps[1],
+                currentProblem.result
+            );
+
+            // 计算总输入格子数
+            const totalInputCells = (multiplierDigits.length > 1 ? 3 : 2) * cols;
+            
+            const newAnswers = [];
+            for (let i = 0; i < totalInputCells; i++) {
+                const correctDigit = getCorrectDigit(i, step1Digits, step2Digits, resultDigits, cols);
+                newAnswers[i] = correctDigit;
+            }
+
+            userAnswers = newAnswers;
+            
+            for (let i = 0; i < userAnswers.length; i++) {
+                const shouldHaveDigit = shouldHaveCorrectDigit(i, step1Digits, step2Digits, resultDigits, cols);
+                if (shouldHaveDigit) {
+                    feedback[i] = true;
+                }
+            }
+
+            renderCalculationGrid();
+            showToast("已显示正确答案", "info");
+        }
+
+        // 生成自定义题目
+        function generateCustomProblem() {
+            const multiplicandStr = document.getElementById('multiplicand').value;
+            const multiplierStr = document.getElementById('multiplier').value;
+            
+            const validation = validateUserInput(multiplicandStr, multiplierStr);
+            
+            if (!validation.isValid) {
+                const errorDiv = document.getElementById('input-error');
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = validation.message;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            document.getElementById('input-error').classList.add('hidden');
+            
+            const multiplicand = parseInt(multiplicandStr);
+            const multiplier = parseInt(multiplierStr);
+            
+            currentProblem = generateNumbers(multiplicand, multiplier);
+            userAnswers = [];
+            feedback = {};
+            renderCalculationGrid();
+            showToast("已生成自定义题目", "info");
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalculationGrid();
+            
+            // 添加事件监听器
+            document.getElementById('check-answers').addEventListener('click', checkAnswers);
+            document.getElementById('new-problem').addEventListener('click', generateNewProblem);
+            document.getElementById('show-answers').addEventListener('click', fillCorrectAnswers);
+            document.getElementById('generate-custom').addEventListener('click', generateCustomProblem);
+            
+            // 为输入框添加键盘事件
+            document.getElementById('multiplicand').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateCustomProblem();
+                }
+            });
+            
+            document.getElementById('multiplier').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    generateCustomProblem();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
